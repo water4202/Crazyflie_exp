@@ -34,25 +34,72 @@ import rospy
 import time
 import rospy_crazyflie.crazyflie_client as crazyflie_client
 import sys
+from geometry_msgs.msg import PoseStamped
+import numpy as np
+
+cf_num = 3
+
+def odom_cb(msg, i):
+    global cf_odom
+    cf_odom[i] = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z]
 
 if __name__ == "__main__":
     rospy.init_node('rospy_crazyflie_example')
-
+    cf_odom = {}
+    client = {}
+    odom_sub = {}
     # Connect to the crazyflie
     crazyflies = crazyflie_client.get_crazyflies(server='/crazyflie_server')
-    client = crazyflie_client.CrazyflieClient(crazyflies[0])
+    for i in range(cf_num):
+        client[i] = crazyflie_client.CrazyflieClient(crazyflies[i])
+        odom_sub[i] = rospy.Subscriber("/vrpn_client_node/"+ crazyflies[i] +"/pose", PoseStamped, odom_cb, i, queue_size=10)
 
     # Causes the crazyflie to takeoff to height of .5 meters
-    client.take_off(.5)
-    client.circle_left(.5, .1)
-    input("enter anything to exit")
+    
+    client[2].take_off(.2)
+    client[1].take_off(.2)
+    client[0].take_off(.2)
+    
+
+    while not cf_num-1 in cf_odom:
+        pass
+
+    while len(cf_odom[2])<2:
+        if len(cf_odom[2])>1:
+            break
+        pass
+
+    while rospy.get_param(crazyflies[0] + "_is_flying") == 0 or rospy.get_param(crazyflies[1] + "_is_flying") == 0 or rospy.get_param(crazyflies[2] + "_is_flying") == 0:
+        print("wait takeoff")
+    #while rospy.get_param(crazyflies[0] + "_is_flying") == 0 or rospy.get_param(crazyflies[1] + "_is_flying") == 0:
+
+    #while not rospy.is_shutdown() and rospy.get_param(crazyflies[0] + "_is_flying") == 1 and rospy.get_param(crazyflies[1] + "_is_flying") == 1:
+    while not rospy.is_shutdown() and rospy.get_param(crazyflies[0] + "_is_flying") == 1 and rospy.get_param(crazyflies[1] + "_is_flying") == 1 and rospy.get_param(crazyflies[2] + "_is_flying") == 1:
+        client[2]._set_vel_setpoint(0.5*(-1.6-cf_odom[2][0]),0.5*(-0.5-cf_odom[2][1]),0.5*(0.5-cf_odom[2][2]),0)
+        client[1]._set_vel_setpoint(0.5*(-1.3-cf_odom[1][0]),0.5*(0.0-cf_odom[1][1]),0.5*(0.5-cf_odom[1][2]),0)
+        client[0]._set_vel_setpoint(0.5*(-1.0-cf_odom[0][0]),0.5*(0.5-cf_odom[0][1]),0.5*(0.5-cf_odom[0][2]),0)
+        print("CF1 position error:",[-1.6-cf_odom[2][0],-0.5-cf_odom[2][1],0.5-cf_odom[2][2]])
+        print("CF2 position error:",[-1.3-cf_odom[1][0],0.0-cf_odom[1][1],0.5-cf_odom[1][2]])
+        print("CF3 position error:",[-1.0-cf_odom[0][0],0.5-cf_odom[0][1],0.5-cf_odom[0][2]])
+
+        if np.linalg.norm(np.array([-1.6-cf_odom[2][0],-0.5-cf_odom[2][1],0.5-cf_odom[2][2]])) < 0.1 and np.linalg.norm(np.array([-1.3-cf_odom[1][0],0.0-cf_odom[1][1],0.5-cf_odom[1][2]])) < 0.1 and np.linalg.norm(np.array([-1.0-cf_odom[0][0],0.5-cf_odom[0][1],0.5-cf_odom[0][2]])) < 0.1:
+            break
+
+    
 
     # Causes the crazyflie to land
-    client.land()
+    client[2].land()
+    client[1].land()
+    client[0].land()
 
     # Waits until current command is complete
-    client.wait()
+    client[2].wait()
+    client[1].wait()
+    client[0].wait()
 
     # Exit program
-    del client
+    del client[2]
+    del client[1]
+    del client[0]
+
     sys.exit(0)

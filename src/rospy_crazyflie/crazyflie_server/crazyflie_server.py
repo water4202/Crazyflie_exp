@@ -32,6 +32,7 @@ import time
 import threading
 import rospy
 import actionlib
+from geometry_msgs.msg import PoseStamped
 
 from rospy_crazyflie.crazyflie_server.crazyflie_log import CrazyflieLog
 from rospy_crazyflie.crazyflie_server.crazyflie_control import CrazyflieControl
@@ -40,6 +41,8 @@ import cflib.crtp
 from cflib.crazyflie import Crazyflie
 from cflib.crazyflie import Localization
 from rospy_crazyflie.srv import GetCrazyflies, GetCrazyfliesResponse
+
+fly_flag = 0
 
 class CrazyflieServer:
 
@@ -56,6 +59,7 @@ class CrazyflieServer:
         self._controllers = {}
         self._odom = {}
         self.odom_sub = {}
+        self.flag = 0
 
         cflib.crtp.init_drivers(enable_debug_driver=False)
 
@@ -79,7 +83,14 @@ class CrazyflieServer:
 
         for link_uri in self._crazyflies.keys():
             name = self._crazyflies[link_uri][0]
-            #self.odom_sub[name] = rospy.Subscriber("/vrpn_client_node"+ name +"/pose", msgtype, self.odom_cb, link_uri, queue_size=10)
+            self.odom_sub[name] = rospy.Subscriber("/vrpn_client_node/"+ name +"/pose", PoseStamped, self.odom_cb, link_uri, queue_size=10)
+            self._odom[link_uri] = Localization(self._crazyflies[link_uri][1])
+            self._crazyflies[link_uri][1].param.set_value('stabilizer.estimator', '2')
+            self._crazyflies[link_uri][1].param.set_value('locSrv.extQuatStdDev', 0.06)
+            self._crazyflies[link_uri][1].param.set_value('kalman.resetEstimation', '1')
+            time.sleep(0.1)
+            self._crazyflies[link_uri][1].param.set_value('kalman.resetEstimation', '0')
+            #self.odom_cb(0, link_uri)
 
     def _get_crazyflies_cb (self, request) :
         response = GetCrazyfliesResponse()
@@ -168,11 +179,22 @@ class CrazyflieServer:
                 del(cf)
 
     def odom_cb(self, msg, link_uri):
-        self._odom[link_uri] = Localization(self._crazyflies[link_uri][1])
-        self._crazyflies[link_uri][1].param.set_value('stabilizer.estimator', '2')
-        self._crazyflies[link_uri][1].param.set_value('locSrv.extQuatStdDev', 0.06)
-        self._crazyflies[link_uri][1].param.set_value('kalman.resetEstimation', '1')
-        time.sleep(0.1)
-        self._crazyflies[link_uri][1].param.set_value('kalman.resetEstimation', '0')
-
-        self._odom[link_uri].send_extpos([msg.position.x, msg.position.y, msg.position.z])
+        self._odom[link_uri].send_extpos([msg.pose.position.x, msg.pose.position.y, msg.pose.position.z])
+        if self._controllers != {}:
+            if link_uri in self._controllers:
+                if self._controllers[link_uri]._mc._thread != None:
+                    rospy.set_param(self._crazyflies[link_uri][0] + "_is_flying",1)
+        '''
+        a = 0
+        while not rospy.is_shutdown():
+            if rospy.get_param("odom") == 1 and a == 0:
+                time.sleep(4)
+                self._odom[link_uri].send_extpos([0, 0, 0.5])
+                a = 1
+            if a == 1:
+                self._odom[link_uri].send_extpos([0, 0, 0.7])
+                a = 2
+            if a == 2:
+                self._odom[link_uri].send_extpos([0, 0, 0.3])
+                a = 1
+        '''

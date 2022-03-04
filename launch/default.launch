@@ -2,4 +2,7 @@
   <node pkg="rospy_crazyflie" name="crazyflie_server" type="crazyflie_server" output="screen">
     <rosparam file='$(find rospy_crazyflie)/config/config.yaml' command='load'/>
   </node>
+  <param name="crazyflie1_is_flying" type="int" value="0" />
+  <param name="crazyflie2_is_flying" type="int" value="0" />
+  <param name="crazyflie3_is_flying" type="int" value="0" />
 </launch>

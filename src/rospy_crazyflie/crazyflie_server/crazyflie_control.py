@@ -118,7 +118,7 @@ class CrazyflieControl:
     def _velocity_control_cb(self, req):
         try:
             obj = pickle.loads(req.pickle)
-            print(self._mc)
+            #print(self._mc)
             if isinstance(obj, SetVelSetpoint):
                 self._mc._set_vel_setpoint(obj.vx, obj.vy, obj.vz, obj.rate_yaw)
             elif isinstance(obj, StartBack):
