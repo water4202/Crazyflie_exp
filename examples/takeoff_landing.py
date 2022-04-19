@@ -69,21 +69,20 @@ if __name__ == "__main__":
             break
         pass
 
+    print("wait takeoff")
     while rospy.get_param(crazyflies[0] + "_is_flying") == 0 or rospy.get_param(crazyflies[1] + "_is_flying") == 0 or rospy.get_param(crazyflies[2] + "_is_flying") == 0:
-        print("wait takeoff")
-    #while rospy.get_param(crazyflies[0] + "_is_flying") == 0 or rospy.get_param(crazyflies[1] + "_is_flying") == 0:
+        pass
 
-    #while not rospy.is_shutdown() and rospy.get_param(crazyflies[0] + "_is_flying") == 1 and rospy.get_param(crazyflies[1] + "_is_flying") == 1:
+    print("start to hover")
     while not rospy.is_shutdown() and rospy.get_param(crazyflies[0] + "_is_flying") == 1 and rospy.get_param(crazyflies[1] + "_is_flying") == 1 and rospy.get_param(crazyflies[2] + "_is_flying") == 1:
-        client[2]._set_vel_setpoint(0.5*(-1.6-cf_odom[2][0]),0.5*(-0.5-cf_odom[2][1]),0.5*(0.5-cf_odom[2][2]),0)
-        client[1]._set_vel_setpoint(0.5*(-1.3-cf_odom[1][0]),0.5*(0.0-cf_odom[1][1]),0.5*(0.5-cf_odom[1][2]),0)
-        client[0]._set_vel_setpoint(0.5*(-1.0-cf_odom[0][0]),0.5*(0.5-cf_odom[0][1]),0.5*(0.5-cf_odom[0][2]),0)
-        print("CF1 position error:",[-1.6-cf_odom[2][0],-0.5-cf_odom[2][1],0.5-cf_odom[2][2]])
-        print("CF2 position error:",[-1.3-cf_odom[1][0],0.0-cf_odom[1][1],0.5-cf_odom[1][2]])
-        print("CF3 position error:",[-1.0-cf_odom[0][0],0.5-cf_odom[0][1],0.5-cf_odom[0][2]])
+        
+        client[2]._set_vel_setpoint(0.5*(-2.5-cf_odom[2][0]),0.5*(0.6-cf_odom[2][1]),0.5*(0.5-cf_odom[2][2]),0)
+        client[1]._set_vel_setpoint(0.5*(-0.61-cf_odom[1][0]),0.5*(-1.47-cf_odom[1][1]),0.5*(0.5-cf_odom[1][2]),0)
+        client[0]._set_vel_setpoint(0.5*(-0.26-cf_odom[0][0]),0.5*(-0.87-cf_odom[0][1]),0.5*(0.5-cf_odom[0][2]),0)
 
-        if np.linalg.norm(np.array([-1.6-cf_odom[2][0],-0.5-cf_odom[2][1],0.5-cf_odom[2][2]])) < 0.1 and np.linalg.norm(np.array([-1.3-cf_odom[1][0],0.0-cf_odom[1][1],0.5-cf_odom[1][2]])) < 0.1 and np.linalg.norm(np.array([-1.0-cf_odom[0][0],0.5-cf_odom[0][1],0.5-cf_odom[0][2]])) < 0.1:
-            break
+        
+        #if np.linalg.norm(np.array([0-cf_odom[2][0],0.15-cf_odom[2][1],0.5-cf_odom[2][2]])) < 0.01 and np.linalg.norm(np.array([0-cf_odom[1][0],-0.34-cf_odom[1][1],0.5-cf_odom[1][2]])) < 0.01 and np.linalg.norm(np.array([-0.2-cf_odom[0][0],-0.1-cf_odom[0][1],0.5-cf_odom[0][2]])) < 0.01:
+            #break
 
     
 
