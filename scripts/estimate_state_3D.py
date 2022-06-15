@@ -17,7 +17,7 @@ cf_num = 3
 P1,P2,P3,measurement,thetac = None,None,None,None,None
 fx,fy,Cu,Cv = 565.6,565.6,320.0,240.0
 time_last = 0
-det_covariance,all_state = Float64MultiArray(),Float64MultiArray()
+det_covariance,all_state,estimation = Float64MultiArray(),Float64MultiArray(),Float64MultiArray()
 uav_odom_sub,uav_odom,uav_pos = {},{},{}
 clock = Clock()
 
@@ -61,7 +61,7 @@ r_measurement[13][13] = 0.0001
 r_measurement[14][14] = 0.0001
 
 # create initial matrices
-ini = np.array([0,-2,0,0,0,0,0,2,0,0,0,0,2,0,0,0,0,0])
+ini = np.array([-0.6,0.2,0,0,0,0,-0.6,0.2,0,0,0,0,-0.6,0.2,0,0,0,0])
 
 def iterate_x(x_in, timestep, inputs):
     '''this function is based on the x_dot and can be nonlinear as needed'''
@@ -121,10 +121,14 @@ def car_odom(msg):
     P3 = np.array([msg.pose[car3_index].position.x, msg.pose[car3_index].position.y, msg.pose[car3_index].position.z])
 
 def uav_odom_cb(msg, i):
-    global uav_odom,uav_pos
+    global uav_odom,uav_pos,thetac
     uav_pos[i] = msg
     q_ = Quaternion(msg.pose.orientation.w, msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z)
-    uav_odom[i] = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z, q_.yaw_pitch_roll[0]]
+    if q_.yaw_pitch_roll[0] < -1.57:
+        thetac = -3.14 - q_.yaw_pitch_roll[0]
+    else:
+        thetac = q_.yaw_pitch_roll[0]
+    uav_odom[i] = [msg.pose.position.x, msg.pose.position.y, msg.pose.position.z, thetac]
 
 def add_measurementnoise():
     global measurement
@@ -141,10 +145,6 @@ def ukf():
     state_estimator.update(15, measurement, r_measurement, uav_state)
     time_last = rospy.Time.now().to_sec()
 
-def theta_update(msg):
-    global thetac
-    thetac = msg.data[0]
-
 def clock_cb(msg):
     global clock
     clock = msg
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
         # pass all the parameters into the UKF!
         # number of state variables, process noise, initial state, initial coariance, three tuning paramters, and the iterate function
-        state_estimator = UKF(18, q, ini, 0.01*np.eye(18), 0.001, 0.0, 2.0, iterate_x,measurement_model)
+        #state_estimator = UKF(18, q, ini, 0.01*np.eye(18), 0.001, 0.0, 2.0, iterate_x,measurement_model)
         rospy.Subscriber('/gazebo/model_states', ModelStates, car_odom, queue_size=10)
         for i in range(cf_num):
             uav_odom_sub[i] = rospy.Subscriber("/vrpn_client_node/crazyflie"+str(i+1)+"/pose", PoseStamped, uav_odom_cb, i, queue_size=10)
@@ -170,21 +170,23 @@ if __name__ == "__main__":
 
             state = np.array([P1[0],P1[1],P1[2],0,0,0,P2[0],P2[1],P2[2],0,0,0,P3[0],P3[1],P3[2],0,0,0])
             uav_state = np.array([uav_odom[0][0],uav_odom[0][1],uav_odom[0][2],uav_odom[1][0],uav_odom[1][1],uav_odom[1][2],uav_odom[2][0],uav_odom[2][1],uav_odom[2][2],uav_odom[0][3]])
-            add_measurementnoise()
-            ukf()
-            estimate_state = state_estimator.get_state()
-            all_state.data = list(estimate_state)+list(uav_state)
+            #add_measurementnoise()
+            #ukf()
+            #estimate_state = state_estimator.get_state()
+            all_state.data = list(state)+list(uav_state)
             rospy.set_param("start_control",1)
             state_pub.publish(all_state)
 #            print "Estimated state: ", state_estimator.get_state()
 #            print "Covariance: ", np.linalg.det(state_estimator.get_covar())
-            position_covar = state_estimator.get_covar()
-            position_covar = np.delete(position_covar,[3,4,5,9,10,11,15,16,17],axis=1)
-            position_covar = np.delete(position_covar,[3,4,5,9,10,11,15,16,17],axis=0)
-            det_covariance.data = [np.linalg.det(position_covar),np.linalg.norm([P1[0],P1[1],P1[2]]-estimate_state[:3]),np.linalg.norm([P2[0],P2[1],P2[2]]-estimate_state[6:9]),np.linalg.norm([P3[0],P3[1],P3[2]]-estimate_state[12:15])]
-            print(det_covariance.data)
-            print('--')
-            bag.write('det_covariance', det_covariance)
+            #position_covar = state_estimator.get_covar()
+            #position_covar = np.delete(position_covar,[3,4,5,9,10,11,15,16,17],axis=1)
+            #position_covar = np.delete(position_covar,[3,4,5,9,10,11,15,16,17],axis=0)
+            #det_covariance.data = [np.trace(position_covar),np.linalg.norm([P1[0],P1[1],P1[2]]-estimate_state[:3]),np.linalg.norm([P2[0],P2[1],P2[2]]-estimate_state[6:9]),np.linalg.norm([P3[0],P3[1],P3[2]]-estimate_state[12:15])]
+            #estimation.data = list(estimate_state[0:3]) + list(estimate_state[6:9]) + list(estimate_state[10:13])
+            #print(det_covariance.data)
+            #print('--')
+            #bag.write('estimation', estimation)
+            #bag.write('det_covariance', det_covariance)
             bag.write('/gazebo/model_states', car_pos)
             bag.write('/vrpn_client_node/crazyflie1/pose', uav_pos[0])
             bag.write('/vrpn_client_node/crazyflie2/pose', uav_pos[1])
