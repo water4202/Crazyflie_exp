@@ -12,7 +12,8 @@ sigma_u,sigma_v,sigma_ranging,sigma_bearing,sigma_alpha = 0.007,0.007,0.01,0.01,
 height_l = 0.2
 height_u = 0.5
 d_safe_car = 0.5
-d_measuring = 2.2 #1.5
+d_measuring = 2.2 # optimal
+#d_measuring = 1.5 # worst
 d_safe_uav = 0.7
 d_communication = 20
 cf_odom = None
@@ -74,8 +75,13 @@ def takeoff():
 def hover():
 
     while rospy.get_param("start_control") == 0:
+<<<<<<< HEAD
         #client_range._set_vel_setpoint(0.5*(-1.31-cf_odom[0]),0.5*(-0.85-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
         client_range._set_vel_setpoint(0.5*(-1.2-cf_odom[0]),0.5*(-1-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
+=======
+        #client_range._set_vel_setpoint(0.5*(-1.31-cf_odom[0]),0.5*(-0.85-cf_odom[1]),0.5*(0.5-cf_odom[2]),0) # worst
+        client_range._set_vel_setpoint(0.5*(-1.95-cf_odom[0]),0.5*(-0.2-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)  # optimal
+>>>>>>> f273827218e80ffff2355313d94a53f954c61476
 
 def qp_ini():
 	global m,x
