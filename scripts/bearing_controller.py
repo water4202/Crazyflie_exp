@@ -11,13 +11,13 @@ P1,P2,P3,Pc,Pr,Pb,A,b = None,None,None,None,None,None,None,None
 sigma_u,sigma_v,sigma_ranging,sigma_bearing,sigma_alpha = 0.007,0.007,0.01,0.01,0.01
 height_l = 0.2
 height_u = 0.5
-d_safe_car = 0.7
+d_safe_car = 0.3
 d_measuring = 2.2 #1.5
 d_safe_uav = 0.7
 d_communication = 20
 cf_odom = None
 m,x = None,None
-gamma = 1
+gamma = 0.5
 gain = 1
 
 def odom_cb(msg):
@@ -75,7 +75,7 @@ def hover():
 
     while rospy.get_param("start_control") == 0:
         #client_bearing._set_vel_setpoint(0.5*(0.7-cf_odom[0]),0.5*(0.0-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
-        client_bearing._set_vel_setpoint(0.5*(-0.83-cf_odom[0]),0.5*(-0.59-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
+        client_bearing._set_vel_setpoint(0.5*(0.1-cf_odom[0]),0.5*(-0.7-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
 
 def qp_ini():
 	global m,x
@@ -137,7 +137,12 @@ if __name__ == "__main__":
         qp_ini()
         while not rospy.is_shutdown():
             qpsolver()
+            if rospy.get_param("stop_ukf") == 1:
+                break
             rate.sleep()
+        client_bearing.land()
+        client_bearing.wait()
+        del client_bearing
     except rospy.ROSInterruptException:
         # Causes the crazyflie to land
         client_bearing.land()

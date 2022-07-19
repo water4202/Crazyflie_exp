@@ -10,17 +10,17 @@ from pyquaternion import Quaternion
 
 P1,P2,P3,Pc,Pr,Pb,thetac,A,b = None,None,None,None,None,None,None,None,None
 fx,fy,lx,ly = 565.6,565.6,640,480
-x_fov_wealth = 3*pi/180
-y_fov_wealth = 3*pi/180
+x_fov_wealth = 7*pi/180
+y_fov_wealth = 6*pi/180
 height_l = 0.2
 height_u = 0.5
 d_safe_car = 0.7
-d_measuring = 2.2 #1.5
-d_safe_uav = 0.7
+d_measuring = 2.8 #1.5
+d_safe_uav = 0.4
 d_communication = 20
 cf_odom = None
 m,x = None,None
-gamma = 1
+gamma = 0.5
 gain = 1
 
 def odom_cb(msg):
@@ -115,7 +115,7 @@ def hover():
 
     while rospy.get_param("start_control") == 0:
         #client_cam._set_vel_setpoint(0.5*(-2.02-cf_odom[0]),0.5*(1.3-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.524-cf_odom[3])*180/pi)
-        client_cam._set_vel_setpoint(0.5*(-2.14-cf_odom[0]),0.5*(0.7-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.27-cf_odom[3])*180/pi)
+        client_cam._set_vel_setpoint(0.5*(-2.0-cf_odom[0]),0.5*(0.1-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.27-cf_odom[3])*180/pi)
 
 def qpsolver():
 	global x,camera_desired_pos
@@ -168,7 +168,12 @@ if __name__ == "__main__":
         qp_ini()
         while not rospy.is_shutdown():
             qpsolver()
+            if rospy.get_param("stop_ukf") == 1:
+                break
             rate.sleep()
+        client_cam.land()
+        client_cam.wait()
+        del client_cam
     except rospy.ROSInterruptException:
         # Causes the crazyflie to land
         client_cam.land()

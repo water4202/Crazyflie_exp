@@ -25,12 +25,12 @@ def control():
 		car2_cmd_vel.linear.x = 0.05
 		car3_cmd_vel.linear.x = 0.05
 	elif time < 161:
-		car1_cmd_vel.linear.x = 0.07
-		car2_cmd_vel.linear.x = 0.07
-		car3_cmd_vel.linear.x = 0.07
-		car1_cmd_vel.angular.z = -0.2
-		car2_cmd_vel.angular.z = -0.2
-		car3_cmd_vel.angular.z = -0.2
+		car1_cmd_vel.linear.x = 0.06
+		car2_cmd_vel.linear.x = 0.06
+		car3_cmd_vel.linear.x = 0.06
+		car1_cmd_vel.angular.z = 0.18
+		car2_cmd_vel.angular.z = 0.18
+		car3_cmd_vel.angular.z = 0.18
 	elif time < 301:
 		car1_cmd_vel.linear.x = 0.05
 		car2_cmd_vel.linear.x = 0.05
@@ -39,34 +39,27 @@ def control():
 		car1_cmd_vel.linear.x = 0.07
 		car2_cmd_vel.linear.x = 0.07
 		car3_cmd_vel.linear.x = 0.07
-		car1_cmd_vel.angular.z = 0.2
-		car2_cmd_vel.angular.z = 0.2
-		car3_cmd_vel.angular.z = 0.2
-	elif time < 421:
-		car1_cmd_vel.linear.x = 0.05
-		car2_cmd_vel.linear.x = 0.05
-		car3_cmd_vel.linear.x = 0.05
-	elif time < 601:
-		car1_cmd_vel.linear.x = 0.05
-		car2_cmd_vel.linear.x = 0.1
-		car3_cmd_vel.linear.x = 0.05
-		car1_cmd_vel.angular.z = -0.1
-		car2_cmd_vel.angular.z = 0.2
-		car3_cmd_vel.angular.z = 0.15
-	elif time < 701:
-		car1_cmd_vel.linear.x = 0.05
-		car2_cmd_vel.linear.x = 0.05
-		car3_cmd_vel.linear.x = 0.05
 		car1_cmd_vel.angular.z = -0.2
+		car2_cmd_vel.angular.z = -0.2
+		car3_cmd_vel.angular.z = -0.2
+	elif time < 601:
+		car1_cmd_vel.linear.x = 0.08
+		car2_cmd_vel.linear.x = 0.08
+		car3_cmd_vel.linear.x = 0.08
+	elif time < 701:
+		car1_cmd_vel.linear.x = 0.07
+		car2_cmd_vel.linear.x = 0.05
+		car3_cmd_vel.linear.x = 0.06
+		car1_cmd_vel.angular.z = 0.1
 		car2_cmd_vel.angular.z = 0.1
 		car3_cmd_vel.angular.z = 0.1
 	elif time < 801:
-		car1_cmd_vel.linear.x = 0.05
+		car1_cmd_vel.linear.x = 0.07
 		car2_cmd_vel.linear.x = 0.05
-		car3_cmd_vel.linear.x = 0.05
-		car1_cmd_vel.angular.z = 0
-		car2_cmd_vel.angular.z = 0
-		car3_cmd_vel.angular.z = 0
+		car3_cmd_vel.linear.x = 0.06
+		car1_cmd_vel.angular.z = 0.1
+		car2_cmd_vel.angular.z = 0.1
+		car3_cmd_vel.angular.z = 0.1
 
 	'''
 	if time < 600:
@@ -105,6 +98,7 @@ if __name__ == '__main__':
 				control()
 			else:
 				stop()
+				rospy.set_param("stop_ukf",1)
 				break
 			rate.sleep()
 	except rospy.ROSInterruptException:
