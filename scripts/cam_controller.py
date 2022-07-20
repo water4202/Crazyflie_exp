@@ -10,18 +10,19 @@ from pyquaternion import Quaternion
 
 P1,P2,P3,Pc,Pr,Pb,thetac,A,b = None,None,None,None,None,None,None,None,None
 fx,fy,lx,ly = 565.6,565.6,640,480
-x_fov_wealth = 7*pi/180
+x_fov_wealth = 7.5*pi/180
 y_fov_wealth = 6*pi/180
 height_l = 0.2
 height_u = 0.5
-d_safe_car = 0.7
+d_safe_car = 1.2
 d_measuring = 2.8 # optimal
 #d_measuring = 1.5 # worst
 d_safe_uav = 0.4
 d_communication = 20
 cf_odom = None
 m,x = None,None
-gamma = 0.5
+gamma = 0.5 # optimal
+#gamma = 0.5 # worst
 gain = 1
 
 def odom_cb(msg):
@@ -82,9 +83,9 @@ def odom(msg):
 				  np.linalg.norm((Pc-Pb)[:2])**2 - d_safe_uav**2, \
 				  d_communication**2 - np.linalg.norm((Pc-Pr)[:2])**2, \
 				  d_communication**2 - np.linalg.norm((Pc-Pb)[:2])**2, \
-				  atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r1c)/np.linalg.norm(r1c[:2])), \
-				  atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r2c)/np.linalg.norm(r2c[:2])), \
-				  atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r3c)/np.linalg.norm(r3c[:2])), \
+				  0.8*(atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r1c)/np.linalg.norm(r1c[:2]))), \
+				  0.8*(atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r2c)/np.linalg.norm(r2c[:2]))), \
+				  0.8*(atan2(lx,2*fx) - x_fov_wealth - acos(nc.dot(r3c)/np.linalg.norm(r3c[:2]))), \
 				  gain*(atan2(ly,2*fy) - y_fov_wealth - atan2(abs(r1c[2]),nc.dot(r1c))), \
 				  gain*(atan2(ly,2*fy) - y_fov_wealth - atan2(abs(r2c[2]),nc.dot(r2c))), \
 				  gain*(atan2(ly,2*fy) - y_fov_wealth - atan2(abs(r3c[2]),nc.dot(r3c))), \
@@ -115,19 +116,17 @@ def takeoff():
 def hover():
 
     while rospy.get_param("start_control") == 0:
-<<<<<<< HEAD
         #client_cam._set_vel_setpoint(0.5*(-2.02-cf_odom[0]),0.5*(1.3-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.524-cf_odom[3])*180/pi)
         client_cam._set_vel_setpoint(0.5*(-2.0-cf_odom[0]),0.5*(0.1-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.27-cf_odom[3])*180/pi)
-=======
-        #client_cam._set_vel_setpoint(0.5*(-2.02-cf_odom[0]),0.5*(1.3-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.524-cf_odom[3])*180/pi) # worst
-        client_cam._set_vel_setpoint(0.5*(-2.14-cf_odom[0]),0.5*(0.7-cf_odom[1]),0.5*(0.5-cf_odom[2]),-0.5*(-0.27-cf_odom[3])*180/pi) # optimal
->>>>>>> f273827218e80ffff2355313d94a53f954c61476
 
 def qpsolver():
 	global x,camera_desired_pos
-	
+
+	angle = [0,0.127]	
+	if t > 1500:
+		angle = [0.119,0]
 	#obj = -(x[0] - (P1 - Pc)[0])**2 - (x[1] - (P1 - Pc)[1])**2 + (x[2] - (P1 - Pc)[2])**2 - (x[0] - (P2 - Pc)[0])**2 - (x[1] - (P2 - Pc)[1])**2 + (x[2] - (P2 - Pc)[2])**2 - (x[0] - (P3 - Pc)[0])**2 - (x[1] - (P3 - Pc)[1])**2 + (x[2] - (P3 - Pc)[2])**2 + (thetac + x[3] - atan2((P1-Pc)[1],(P1-Pc)[0]))**2 + (thetac + x[3] - atan2((P2-Pc)[1],(P2-Pc)[0]))**2 + (thetac + x[3] - atan2((P3-Pc)[1],(P3-Pc)[0]))**2	# worst
-	obj = (x[0] - (P1 - Pc)[0])**2 + (x[1] - (P1 - Pc)[1])**2 - (x[2] - (P1 - Pc)[2])**2 + (x[0] - (P2 - Pc)[0])**2 + (x[1] - (P2 - Pc)[1])**2 - (x[2] - (P2 - Pc)[2])**2 + (x[0] - (P3 - Pc)[0])**2 + (x[1] - (P3 - Pc)[1])**2 - (x[2] - (P3 - Pc)[2])**2 - (thetac + x[3] - atan2((P1-Pc)[1],(P1-Pc)[0]))**2 - (thetac + x[3] - atan2((P2-Pc)[1],(P2-Pc)[0]))**2 - (thetac + x[3] - atan2((P3-Pc)[1],(P3-Pc)[0]))**2	# optimal
+	obj = (x[0] - (P1 - Pc)[0])**2 + (x[1] - (P1 - Pc)[1])**2 - (x[2] - (P1 - Pc)[2])**2 + (x[0] - (P2 - Pc)[0])**2 + (x[1] - (P2 - Pc)[1])**2 - (x[2] - (P2 - Pc)[2])**2 + (x[0] - (P3 - Pc)[0])**2 + (x[1] - (P3 - Pc)[1])**2 - (x[2] - (P3 - Pc)[2])**2 - (thetac + x[3] - angle[0] - atan2((P1-Pc)[1],(P1-Pc)[0]))**2 - (thetac + x[3] + angle[1] - atan2((P2-Pc)[1],(P2-Pc)[0]))**2 - (thetac + x[3] - 0 - atan2((P3-Pc)[1],(P3-Pc)[0]))**2	# optimal
 	m.setObjective(obj)
 
 	m.remove(m.getConstrs())
@@ -172,8 +171,10 @@ if __name__ == "__main__":
             rate.sleep()
 
         qp_ini()
+        t = 0
         while not rospy.is_shutdown():
             qpsolver()
+            t+=1
             if rospy.get_param("stop_ukf") == 1:
                 break
             rate.sleep()

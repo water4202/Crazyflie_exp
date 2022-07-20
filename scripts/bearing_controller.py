@@ -18,7 +18,8 @@ d_safe_uav = 0.7
 d_communication = 20
 cf_odom = None
 m,x = None,None
-gamma = 0.5
+gamma = 0.4 # optimal
+#gamma = 0.5 # worst
 gain = 1
 
 def odom_cb(msg):
@@ -75,13 +76,8 @@ def takeoff():
 def hover():
 
     while rospy.get_param("start_control") == 0:
-<<<<<<< HEAD
         #client_bearing._set_vel_setpoint(0.5*(0.7-cf_odom[0]),0.5*(0.0-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
         client_bearing._set_vel_setpoint(0.5*(0.1-cf_odom[0]),0.5*(-0.7-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
-=======
-        #client_bearing._set_vel_setpoint(0.5*(0.7-cf_odom[0]),0.5*(0.0-cf_odom[1]),0.5*(0.5-cf_odom[2]),0) # worst
-        client_bearing._set_vel_setpoint(0.5*(-0.83-cf_odom[0]),0.5*(-0.59-cf_odom[1]),0.5*(0.5-cf_odom[2]),0) # optimal
->>>>>>> f273827218e80ffff2355313d94a53f954c61476
 
 def qp_ini():
 	global m,x
