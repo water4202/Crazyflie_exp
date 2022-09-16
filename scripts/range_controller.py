@@ -7,19 +7,20 @@ from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float64MultiArray
 from gurobipy import GRB
 
+dt,t_l = 0,0
 P1,P2,P3,Pc,Pr,Pb,A,b = None,None,None,None,None,None,None,None
 sigma_u,sigma_v,sigma_ranging,sigma_bearing,sigma_alpha = 0.007,0.007,0.01,0.01,0.01
 height_l = 0.2
 height_u = 0.5
 d_safe_car = 0.6
-d_measuring = 2.2 # optimal
-#d_measuring = 1.5 # worst
+#d_measuring = 2.2 # optimal
+d_measuring = 1.5 # worst
 d_safe_uav = 0.8
 d_communication = 20
 cf_odom = None
 m,x = None,None
-gamma = 0.4 # optimal
-#gamma = 0.5 # worst
+#gamma = 0.4 # optimal
+gamma = 0.5 # worst
 gain = 1
 
 def odom_cb(msg):
@@ -32,9 +33,9 @@ def odom(msg):
 	Pc = np.array(msg.data[18:21])
 	Pr = np.array(msg.data[21:24])
 	Pb = np.array(msg.data[24:27])
-	P1 = np.array(msg.data[0:3])
-	P2 = np.array(msg.data[6:9])
-	P3 = np.array(msg.data[12:15])
+	P1 = np.array(msg.data[0:3]) + dt*np.array(msg.data[3:6])
+	P2 = np.array(msg.data[6:9]) + dt*np.array(msg.data[9:12])
+	P3 = np.array(msg.data[12:15]) + dt*np.array(msg.data[15:18])
 
 	A = np.array([ \
 				  (-2*(Pr-P1)[:2]).tolist()+[0], \
@@ -76,8 +77,8 @@ def takeoff():
 def hover():
 
     while rospy.get_param("start_control") == 0:
-        #client_range._set_vel_setpoint(0.5*(-1.31-cf_odom[0]),0.5*(-0.85-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
-        client_range._set_vel_setpoint(0.5*(-1.2-cf_odom[0]),0.5*(-1-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
+        client_range._set_vel_setpoint(0.5*(-1.31-cf_odom[0]),0.5*(-0.85-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
+        #client_range._set_vel_setpoint(0.5*(-1.2-cf_odom[0]),0.5*(-1-cf_odom[1]),0.5*(0.5-cf_odom[2]),0)
 
 def qp_ini():
 	global m,x
@@ -95,8 +96,8 @@ def addCons(i):
 def qpsolver():
 	global x
 
-	#obj = -(x[0] - (P1 - Pr)[0])**2 - (x[1] - (P1 - Pr)[1])**2 - (x[2] - (P1 - Pr)[2])**2 - (x[0] - (P2 - Pr)[0])**2 - (x[1] - (P2 - Pr)[1])**2 - (x[2] - (P2 - Pr)[2])**2 - (x[0] - (P3 - Pr)[0])**2 - (x[1] - (P3 - Pr)[1])**2 - (x[2] - (P3 - Pr)[2])**2 # worst
-	obj = (x[0] - (P1 - Pr)[0])**2 + (x[1] - (P1 - Pr)[1])**2 + (x[2] - (P1 - Pr)[2])**2 + (x[0] - (P2 - Pr)[0])**2 + (x[1] - (P2 - Pr)[1])**2 + (x[2] - (P2 - Pr)[2])**2 + (x[0] - (P3 - Pr)[0])**2 + (x[1] - (P3 - Pr)[1])**2 + (x[2] - (P3 - Pr)[2])**2 # optimal
+	obj = -(x[0] - (P1 - Pr)[0])**2 - (x[1] - (P1 - Pr)[1])**2 - (x[2] - (P1 - Pr)[2])**2 - (x[0] - (P2 - Pr)[0])**2 - (x[1] - (P2 - Pr)[1])**2 - (x[2] - (P2 - Pr)[2])**2 - (x[0] - (P3 - Pr)[0])**2 - (x[1] - (P3 - Pr)[1])**2 - (x[2] - (P3 - Pr)[2])**2 # worst
+	#obj = (x[0] - (P1 - Pr)[0])**2 + (x[1] - (P1 - Pr)[1])**2 + (x[2] - (P1 - Pr)[2])**2 + (x[0] - (P2 - Pr)[0])**2 + (x[1] - (P2 - Pr)[1])**2 + (x[2] - (P2 - Pr)[2])**2 + (x[0] - (P3 - Pr)[0])**2 + (x[1] - (P3 - Pr)[1])**2 + (x[2] - (P3 - Pr)[2])**2 # optimal
 	m.setObjective(obj)
 
 	m.remove(m.getConstrs())
@@ -137,11 +138,15 @@ if __name__ == "__main__":
             rate.sleep()
 
         qp_ini()
+        t_l = rospy.Time.now().to_sec()
         while not rospy.is_shutdown():
+            dt = rospy.Time.now().to_sec() - t_l
             qpsolver()
             if rospy.get_param("stop_ukf") == 1:
                 break
+            t_l = rospy.Time.now().to_sec()
             rate.sleep()
+
         client_range.land()
         client_range.wait()
         del client_range

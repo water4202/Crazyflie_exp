@@ -6,13 +6,13 @@
 
   <!-- Gazebo sim -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="gui" value="true"/>
+        <arg name="gui" value="false"/>
         <arg name="world_name" value=""/>
         <arg name="debug" value="false"/>
         <arg name="verbose" value="false"/>
         <arg name="paused" value="false"/>
     </include>
-
+  -->
 <!-- Worst  
 
 	<group ns="car1">
@@ -31,7 +31,7 @@
 	</group>
 
  -->
-<!-- Optimal  -->
+<!-- Optimal  
 
 	<group ns="car1">
 		<param name="robot_description" command="$(find xacro)/xacro $(find rospy_crazyflie)/urdf/turtlebot3_description/turtlebot3_burger.urdf.xacro" />		
@@ -47,7 +47,7 @@
 		<param name="robot_description" command="$(find xacro)/xacro $(find rospy_crazyflie)/urdf/turtlebot3_description/turtlebot3_burger.urdf.xacro" />
 		<node name="car3" pkg="gazebo_ros" type="spawn_model" output="screen" args="-urdf -model car3 -x -0.3 -y 0.0 -z 0 -R 0 -P 0 -Y 0 -param robot_description"/>
 	</group>
-
+-->
   <param name="crazyflie1_is_flying" type="int" value="0" />
   <param name="crazyflie2_is_flying" type="int" value="0" />
   <param name="crazyflie3_is_flying" type="int" value="0" />
